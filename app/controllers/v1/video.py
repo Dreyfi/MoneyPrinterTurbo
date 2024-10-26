@@ -133,6 +133,17 @@ def get_task(
             for v in combined_videos:
                 urls.append(file_to_uri(v))
             task["combined_videos"] = urls
+        if "video_sections" in task:
+            video_sections = task["video_sections"]
+            urls = {}
+            if isinstance(video_sections, list) and len(video_sections) > 0 and isinstance(video_sections[0], dict):
+                for key, v in video_sections[0].items():
+                    urls[key] = file_to_uri(v)
+            else:
+                logger.error("Expected video_sections to be a list containing a dictionary.")
+                raise TypeError("video_sections must be a list containing a dictionary")
+
+            task["video_sections"] = urls
         return utils.get_response(200, task)
 
     raise HttpException(

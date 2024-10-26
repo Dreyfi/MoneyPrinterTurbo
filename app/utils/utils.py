@@ -7,6 +7,7 @@ from loguru import logger
 import json
 from uuid import uuid4
 import urllib3
+import shutil
 
 from app.models import const
 
@@ -227,3 +228,6 @@ def load_locales(i18n_dir):
 
 def parse_extension(filename):
     return os.path.splitext(filename)[1].strip().lower().replace(".", "")
+
+def copy_file(fromPath, toPath): 
+    shutil.copy(fromPath, toPath)

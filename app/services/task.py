@@ -162,6 +162,7 @@ def generate_final_videos(
 ):
     final_video_paths = []
     combined_video_paths = []
+    video_sections_list = []
     video_concat_mode = (
         params.video_concat_mode if params.video_count == 1 else VideoConcatMode.random
     )
@@ -173,15 +174,20 @@ def generate_final_videos(
             utils.task_dir(task_id), f"combined-{index}.mp4"
         )
         logger.info(f"\n\n## combining video: {index} => {combined_video_path}")
-        video.combine_videos(
+
+        combine_result = video.combine_videos(
             combined_video_path=combined_video_path,
             video_paths=downloaded_videos,
             audio_file=audio_file,
+            task_id=task_id,
             video_aspect=params.video_aspect,
             video_concat_mode=video_concat_mode,
             max_clip_duration=params.video_clip_duration,
             threads=params.n_threads,
         )
+
+        combined_video_paths.append(combine_result["combined_video_path"])
+        video_sections_list.append(combine_result["video_sections"])
 
         _progress += 50 / params.video_count / 2
         sm.state.update_task(task_id, progress=_progress)
@@ -201,9 +207,8 @@ def generate_final_videos(
         sm.state.update_task(task_id, progress=_progress)
 
         final_video_paths.append(final_video_path)
-        combined_video_paths.append(combined_video_path)
 
-    return final_video_paths, combined_video_paths
+    return final_video_paths, combined_video_paths, video_sections_list
 
 
 def start(task_id, params: VideoParams, stop_at: str = "video"):
@@ -212,7 +217,7 @@ def start(task_id, params: VideoParams, stop_at: str = "video"):
 
     if type(params.video_concat_mode) is str:
         params.video_concat_mode = VideoConcatMode(params.video_concat_mode)
-        
+
     # 1. Generate script
     video_script = generate_script(task_id, params)
     if not video_script:
@@ -296,7 +301,7 @@ def start(task_id, params: VideoParams, stop_at: str = "video"):
     sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=50)
 
     # 6. Generate final videos
-    final_video_paths, combined_video_paths = generate_final_videos(
+    final_video_paths, combined_video_paths, video_sections = generate_final_videos(
         task_id, params, downloaded_videos, audio_file, subtitle_path
     )
 
@@ -317,6 +322,7 @@ def start(task_id, params: VideoParams, stop_at: str = "video"):
         "audio_duration": audio_duration,
         "subtitle_path": subtitle_path,
         "materials": downloaded_videos,
+        "video_sections": video_sections
     }
     sm.state.update_task(
         task_id, state=const.TASK_STATE_COMPLETE, progress=100, **kwargs
