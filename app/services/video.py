@@ -106,11 +106,13 @@ def combine_videos(
         if clip.duration > max_clip_duration:
             clip = clip.subclip(0, max_clip_duration)
 
-        clipPath = path.join(utils.task_dir(task_id), f"vid-{current_time}.mp4")
+
+        rounded_time = round(current_time, 2)
+        clipPath = os.path.join(utils.task_dir(task_id), f"vid-{rounded_time}.mp4")
         utils.copy_file(original_video_path, clipPath)
 
         clips.append(clip)
-        start_time_mapping[current_time] = clipPath
+        start_time_mapping[rounded_time] = clipPath
         video_duration += clip.duration
         current_time += clip.duration
 

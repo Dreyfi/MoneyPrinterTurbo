@@ -162,7 +162,7 @@ def generate_final_videos(
 ):
     final_video_paths = []
     combined_video_paths = []
-    video_sections_list = []
+    video_sections_list = [{} for _ in range(params.video_count)]  # Initialize as dictionaries for each video count
     video_concat_mode = (
         params.video_concat_mode if params.video_count == 1 else VideoConcatMode.random
     )
@@ -187,7 +187,7 @@ def generate_final_videos(
         )
 
         combined_video_paths.append(combine_result["combined_video_path"])
-        video_sections_list.append(combine_result["video_sections"])
+        video_sections_list[i] = combine_result["video_sections"]
 
         _progress += 50 / params.video_count / 2
         sm.state.update_task(task_id, progress=_progress)
@@ -208,7 +208,9 @@ def generate_final_videos(
 
         final_video_paths.append(final_video_path)
 
-    return final_video_paths, combined_video_paths, video_sections_list
+    video_sections = {str(i + 1): video_sections_list[i] for i in range(params.video_count)}
+
+    return final_video_paths, combined_video_paths, video_sections
 
 
 def start(task_id, params: VideoParams, stop_at: str = "video"):

@@ -114,36 +114,44 @@ def get_task(
         task_dir = utils.task_dir()
 
         def file_to_uri(file):
-            if not file.startswith(endpoint):
-                _uri_path = v.replace(task_dir, "tasks").replace("\\", "/")
-                _uri_path = f"{endpoint}/{_uri_path}"
+            if isinstance(file, str):
+                if not file.startswith(endpoint):
+                    _uri_path = file.replace(task_dir, "tasks").replace("\\", "/")
+                    _uri_path = f"{endpoint}/{_uri_path}"
+                else:
+                    _uri_path = file
+                return _uri_path
             else:
-                _uri_path = file
-            return _uri_path
+                logger.warning("Expected a string for file path, but got a non-string object.")
+                return None
 
         if "videos" in task:
-            videos = task["videos"]
-            urls = []
-            for v in videos:
-                urls.append(file_to_uri(v))
-            task["videos"] = urls
+            task["videos"] = [file_to_uri(v) for v in task["videos"] if isinstance(v, str)]
+            
         if "combined_videos" in task:
-            combined_videos = task["combined_videos"]
-            urls = []
-            for v in combined_videos:
-                urls.append(file_to_uri(v))
-            task["combined_videos"] = urls
+            task["combined_videos"] = [file_to_uri(v) for v in task["combined_videos"] if isinstance(v, str)]
+
         if "video_sections" in task:
             video_sections = task["video_sections"]
             urls = {}
-            if isinstance(video_sections, list) and len(video_sections) > 0 and isinstance(video_sections[0], dict):
-                for key, v in video_sections[0].items():
-                    urls[key] = file_to_uri(v)
-            else:
-                logger.error("Expected video_sections to be a list containing a dictionary.")
-                raise TypeError("video_sections must be a list containing a dictionary")
 
-            task["video_sections"] = urls
+            if isinstance(video_sections, dict):
+                for section_key, section_value in video_sections.items():
+                    if isinstance(section_value, dict):
+                        urls[section_key] = {
+                            k: file_to_uri(v) for k, v in section_value.items() if isinstance(v, str)
+                        }
+                    else:
+                        logger.warning(f"Unexpected structure in video_sections[{section_key}]. Expected a dictionary.")
+            else:
+                logger.error("Expected video_sections to be a dictionary of dictionaries.")
+                raise TypeError("video_sections must be a dictionary containing dictionaries.")
+
+            task["video_sections"] = {
+                sec_key: {k: v for k, v in sec_val.items() if v is not None}
+                for sec_key, sec_val in urls.items()
+            }
+            
         return utils.get_response(200, task)
 
     raise HttpException(
