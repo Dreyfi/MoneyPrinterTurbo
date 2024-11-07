@@ -142,6 +142,7 @@ def get_video_materials(task_id, params, video_terms, audio_duration):
         downloaded_videos = material.download_videos(
             task_id=task_id,
             search_terms=video_terms,
+            materials=params.video_materials,
             source=params.video_source,
             video_aspect=params.video_aspect,
             video_contact_mode=params.video_concat_mode,
