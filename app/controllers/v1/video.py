@@ -151,6 +151,9 @@ def get_task(
                 sec_key: {k: v for k, v in sec_val.items() if v is not None}
                 for sec_key, sec_val in urls.items()
             }
+
+        if "subtitle_path" in task:
+            task["subtitle_path"] = file_to_uri(task["subtitle_path"])
             
         return utils.get_response(200, task)
 
