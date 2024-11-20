@@ -34,12 +34,25 @@ def get_api_key(cfg_key: str):
 def search_videos_pexels(
     search_term: str,
     minimum_duration: int,
+    materials: List[MaterialInfo] = [],
     video_aspect: VideoAspect = VideoAspect.portrait,
 ) -> List[MaterialInfo]:
     aspect = VideoAspect(video_aspect)
     video_orientation = aspect.name
     video_width, video_height = aspect.to_resolution()
     api_key = get_api_key("pexels_api_keys")
+
+    if materials:
+        video_items = []
+        for material in materials:
+            item = MaterialInfo()
+            item.provider = "pexels"
+            item.url = material.url
+            item.duration = material.duration
+            video_items.append(item)
+
+        return video_items
+
     headers = {
         "Authorization": api_key,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
@@ -91,6 +104,7 @@ def search_videos_pexels(
 def search_videos_pixabay(
     search_term: str,
     minimum_duration: int,
+    materials: List[MaterialInfo] = [],
     video_aspect: VideoAspect = VideoAspect.portrait,
 ) -> List[MaterialInfo]:
     aspect = VideoAspect(video_aspect)
@@ -98,6 +112,18 @@ def search_videos_pixabay(
     video_width, video_height = aspect.to_resolution()
 
     api_key = get_api_key("pixabay_api_keys")
+
+    if materials:
+        video_items = []
+        for material in materials:
+            item = MaterialInfo()
+            item.provider = "pixabay"
+            item.url = material.url
+            item.duration = material.duration
+            video_items.append(item)
+
+        return video_items
+    
     # Build URL
     params = {
         "q": search_term,
@@ -193,6 +219,7 @@ def save_video(video_url: str, save_dir: str = "") -> str:
 def download_videos(
     task_id: str,
     search_terms: List[str],
+    materials: List[MaterialInfo],
     source: str = "pexels",
     video_aspect: VideoAspect = VideoAspect.portrait,
     video_contact_mode: VideoConcatMode = VideoConcatMode.random,
@@ -210,6 +237,7 @@ def download_videos(
         video_items = search_videos(
             search_term=search_term,
             minimum_duration=max_clip_duration,
+            materials=materials,
             video_aspect=video_aspect,
         )
         logger.info(f"found {len(video_items)} videos for '{search_term}'")
